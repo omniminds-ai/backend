@@ -1,0 +1,15 @@
+services:
+  - environment_slug: node
+    github:
+      branch: sprint-1
+      deploy_on_push: false
+      repo: omniminds-ai/mon-repo
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    external_ports:
+      - 80
+    internal_ports:
+      - 8080
+    name: om-backend-sprint1
+    build_command: npm run build
+    run_command: npm run start

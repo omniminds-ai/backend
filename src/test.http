@@ -1,0 +1,4 @@
+GET localhost:8001/hc
+
+###
+GET localhost:8001/api/v1/settings
