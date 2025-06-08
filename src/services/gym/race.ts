@@ -17,7 +17,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const solanaRpc = process.env.RPC_URL!;
+const solanaRpc = process.env.SOLANA_RPC_URL!;
 const viralToken = process.env.VIRAL_TOKEN!;
 const treasuryWalletPath = process.env.GYM_TREASURY_WALLET!;
 const blockchainService = new BlockchainService(solanaRpc, '');
@@ -27,7 +27,7 @@ const treasuryKeypair = Keypair.fromSecretKey(
 );
 
 const treasuryService = new TreasuryService(
-  process.env.RPC_URL!,
+  process.env.SOLANA_RPC_URL!,
   process.env.GYM_TREASURY_WEBHOOK!,
   process.env.GYM_TREASURY_WALLET!,
   process.env.VIRAL_TOKEN!

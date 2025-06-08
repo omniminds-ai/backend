@@ -311,7 +311,7 @@ export async function processNextInQueue() {
 
                 // Get initial treasury balance
                 const blockchainService = new (await import('../blockchain/index.js')).default(
-                  process.env.RPC_URL || '',
+                  process.env.SOLANA_RPC_URL || '',
                   '' // Program ID not needed for token transfers
                 );
 

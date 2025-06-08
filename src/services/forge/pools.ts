@@ -8,7 +8,7 @@ import { Document, Types } from 'mongoose';
 import { sendEmail } from '../email/index.ts';
 
 // setup the pool refresher
-const blockchainService = new BlockchainService(process.env.RPC_URL || '', '');
+const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || '', '');
 const BALANCE_REFRESH_INTERVAL = 1000 * 60 * 60 * 2; // 2 hours
 // set up the discord webhook
 const FORGE_WEBHOOK = process.env.GYM_FORGE_WEBHOOK;

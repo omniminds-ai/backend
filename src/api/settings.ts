@@ -1,35 +1,29 @@
 import express, { Request, Response } from 'express';
 import DatabaseService from '../services/db/index.ts';
-import BlockcahinService from '../services/blockchain/index.ts';
+import BlockchainService from '../services/blockchain/index.ts';
 import { errorHandlerAsync } from '../middleware/errorHandler.ts';
 import { validateQuery } from '../middleware/validator.ts';
 import { settingsQuerySchema } from './schemas/settings.ts';
 import { successResponse } from '../middleware/types/errors.ts';
-import BlockchainService from '../services/blockchain/index.ts';
-import { Keypair } from '@solana/web3.js';
-import { readFileSync } from 'fs';
 
 const router = express.Router();
 // Load treasury wallet
 const solanaRpc = process.env.SOLANA_RPC_URL!;
-const viralToken = process.env.VIRAL_TOKEN!;
-const treasuryWalletPath = process.env.GYM_TREASURY_WALLET!;
+const omnisToken = process.env.OMNIS_TOKEN!;
+const treasuryWalletPublicKey = process.env.GYM_TREASURY_WALLET_PUBLICKEY!;
 const blockchainService = new BlockchainService(solanaRpc, '');
-// const treasuryKeypair = Keypair.fromSecretKey(
-//   Uint8Array.from(JSON.parse(readFileSync(treasuryWalletPath, 'utf-8')))
-// );
 
 router.get(
   '/',
   validateQuery(settingsQuerySchema),
   errorHandlerAsync(async (_req: Request, res: Response) => {
-    const challenges = await DatabaseService.getSettings();
+    const challenges = await DatabaseService.getChallengesSummary();
     const pages = await DatabaseService.getPages({});
     const endpoints = pages?.find((page) => page.name === 'api-endpoints')?.content?.endpoints;
     const faq = pages?.find((page) => page.name === 'faq')?.content?.faq;
-    const jailToken = pages?.find((page) => page.name === 'omnis-token')?.content;
+    const token = pages?.find((page) => page.name === 'omnis-token')?.content;
 
-    const solPrice = await BlockcahinService.getSolPriceInUSDT();
+    const solPrice = await BlockchainService.getSolPriceInUSDT();
 
     // Get active/upcoming challenge
     const display_conditions = ['active', 'upcoming'];
@@ -84,7 +78,7 @@ router.get(
       endpoints: endpoints,
       faq: faq,
       challenges: challenges,
-      jailToken: jailToken,
+      token,
       activeChallenge: activeChallenge,
       concludedChallenges: concludedChallenges,
       treasury: totalTreasury,
@@ -98,15 +92,15 @@ router.get(
 );
 
 // Get treasury balance endpoint
-// router.get(
-//   '/treasury',
-//   errorHandlerAsync(async (_req, res) => {
-//     const balance = await blockchainService.getTokenBalance(
-//       viralToken,
-//       treasuryKeypair.publicKey.toBase58()
-//     );
-//     res.status(200).json(successResponse({ balance }));
-//   })
-// );
-//
+router.get(
+  '/treasury',
+  errorHandlerAsync(async (_req, res) => {
+    const balance = await blockchainService.getTokenBalance(
+      omnisToken,
+      treasuryWalletPublicKey
+    );
+    res.status(200).json(successResponse({ balance }));
+  })
+);
+
 export { router as settingsApi };

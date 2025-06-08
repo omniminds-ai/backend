@@ -6,7 +6,7 @@ import { DBChallenge } from '../../types/db.ts';
 class TournamentService {
   solanaRpc: string;
   constructor() {
-    this.solanaRpc = process.env.RPC_URL!;
+    this.solanaRpc = process.env.SOLANA_RPC_URL!;
   }
 
   // validate

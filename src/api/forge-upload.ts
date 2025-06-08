@@ -32,7 +32,7 @@ import { ApiError, successResponse } from '../middleware/types/errors.ts';
 import { requireWalletAddress } from '../middleware/auth.ts';
 
 // Initialize blockchain service
-const blockchainService = new BlockchainService(process.env.RPC_URL || '', '');
+const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || '', '');
 
 // Configure multer for handling chunk uploads
 const upload = multer({

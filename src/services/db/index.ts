@@ -7,12 +7,11 @@ import {
   RaceModel,
   GymSessionModel,
   chatSchema,
-  challengeSchema
 } from '../../models/Models.ts';
 import { TrainingEventModel } from '../../models/TrainingEvent.ts';
 import dotenv from 'dotenv';
 import { InferSchemaType, QueryOptions, SortOrder, UpdateWriteOpResult } from 'mongoose';
-import { GymVpsModel, gymVPSSchema } from '../../models/GymVPS.ts';
+import { GymVpsModel } from '../../models/GymVPS.ts';
 import {
   VPSRegion,
   DBChallenge,
@@ -65,6 +64,36 @@ class DataBaseService extends EventEmitter {
     } catch (error) {
       console.error('Database Service Error:', error);
       return false;
+    }
+  }
+
+  async getChallengesSummary(): Promise<DBChallenge[] | undefined> {
+    try {
+      const challenge = await ChallengeModel.find(
+        {},
+        {
+          _id: 0,
+          id: '$_id',
+          name: 1,
+          title: 1,
+          image: 1,
+          label: 1,
+          level: 1,
+          status: 1,
+          pfp: 1,
+          entryFee: 1,
+          expiry: 1,
+          winning_prize: 1,
+          developer_fee: 1,
+          start_date: 1,
+          winning_address: 1,
+          winning_txn: 1
+        }
+      );
+
+      return challenge;
+    } catch (error) {
+      console.error('Database Service Error:', error);
     }
   }
 
@@ -157,36 +186,6 @@ class DataBaseService extends EventEmitter {
   async getPages(query: QueryOptions): Promise<DBPage[] | undefined> {
     try {
       return await PagesModel.find(query);
-    } catch (error) {
-      console.error('Database Service Error:', error);
-    }
-  }
-  // Settings-related methods
-  async getSettings(): Promise<DBChallenge[] | undefined> {
-    try {
-      const challenge = await ChallengeModel.find(
-        {},
-        {
-          _id: 0,
-          id: '$_id',
-          name: 1,
-          title: 1,
-          image: 1,
-          label: 1,
-          level: 1,
-          status: 1,
-          pfp: 1,
-          entryFee: 1,
-          expiry: 1,
-          winning_prize: 1,
-          developer_fee: 1,
-          start_date: 1,
-          winning_address: 1,
-          winning_txn: 1
-        }
-      );
-
-      return challenge;
     } catch (error) {
       console.error('Database Service Error:', error);
     }

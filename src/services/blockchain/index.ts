@@ -35,7 +35,7 @@ class BlockchainService {
     let defaultSolPrice = 230;
 
     try {
-      const tokenPage = await DatabaseService.getPages({ name: 'viral-token' });
+      const tokenPage = await DatabaseService.getPages({ name: 'omnis-token' });
       if (tokenPage && tokenPage[0]?.content?.sol_price) {
         defaultSolPrice = tokenPage[0].content.sol_price;
       }
@@ -116,7 +116,7 @@ class BlockchainService {
         params: { last_n_blocks: 100, api_version: 2 }
       };
 
-      const response = await axios.post(process.env.RPC_URL!, data, config);
+      const response = await axios.post(process.env.SOLANA_RPC_URL!, data, config);
 
       console.log('QuickNode priority fees response:', response.data);
 

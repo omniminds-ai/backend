@@ -28,7 +28,7 @@ import { sendEmail } from '../../services/email/index.ts';
 const FORGE_WEBHOOK = process.env.GYM_FORGE_WEBHOOK;
 const webhook = new Webhook(FORGE_WEBHOOK);
 
-const blockchainService = new BlockchainService(process.env.RPC_URL || '', '');
+const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || '', '');
 
 // Refresh pool balance
 router.post(

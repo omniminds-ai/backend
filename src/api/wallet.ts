@@ -16,7 +16,7 @@ import { checkConnectionSchema, connectWalletSchema } from './schemas/wallet.ts'
 import { requireWalletAddress } from '../middleware/auth.ts';
 
 const router: Router = express.Router();
-const blockchainService = new BlockchainService(process.env.RPC_URL || '', '');
+const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || '', '');
 
 // Store wallet address for token
 router.post(
@@ -35,7 +35,7 @@ router.post(
 
       try {
         // Create the message that was signed
-        const message = `viralmind desktop\nnonce: ${timestamp}`;
+        const message = `Omniminds Desktop\nnonce: ${timestamp}`;
         const messageBytes = new TextEncoder().encode(message);
 
         // Convert base64 signature to Uint8Array
@@ -100,7 +100,7 @@ router.get(
   errorHandlerAsync(async (req: Request, res: Response) => {
     const { address } = req.params;
 
-    const balance = await blockchainService.getTokenBalance(process.env.VIRAL_TOKEN || '', address);
+    const balance = await blockchainService.getTokenBalance(process.env.OMNIS_TOKEN || '', address);
 
     res.status(200).json(successResponse({ balance }));
   })
