@@ -30,7 +30,7 @@ app.use(function (req, res, next) {
     'tauri://localhost',
     'http://tauri.localhost',
     'http://localhost:1420',
-    'http://localhost:3000',
+    'http://localhost:5173',
     'http://localhost:8001',
     'http://18.157.122.205',
     'https://omniminds.ai'
@@ -57,18 +57,23 @@ app.set('trust proxy', true);
 
 import { settingsApi } from './api/settings.ts';
 app.use('/v1/settings', settingsApi);
-
+//
 import { walletApi } from './api/wallet.ts';
-app.use('/api/v1/wallet', walletApi);
+app.use('/v1/wallet', walletApi);
+
+
+// import { arena } from './api/gym.ts';
+// import { launchBayApi } from './api/forge/index.ts';
+// import { trainingUploadApi } from './api/forge-upload.ts';
 
 import { gymApi } from './api/gym.ts';
 import { forgeApi } from './api/forge/index.ts';
 import { forgeUploadApi } from './api/forge-upload.ts';
 
 
-app.use('/api/v1/gym', gymApi);
-app.use('/api/v1/forge', forgeApi);
-app.use('/api/v1/forge/upload', forgeUploadApi);
+app.use('/v1/gym', gymApi);
+app.use('/v1/forge', forgeApi);
+app.use('/v1/forge/upload', forgeUploadApi);
 
 //
 // error handling
@@ -112,7 +117,6 @@ async function connectToDatabase() {
     console.log('Database connected!');
   } catch (err) {
     console.error('Error connecting to MongoDB:', err);
-  } finally {
     await mongoose.disconnect()
   }
 }

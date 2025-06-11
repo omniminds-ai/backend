@@ -26,16 +26,17 @@ router.get(
   '/categories',
   errorHandlerAsync(async (_req: Request, res: Response) => {
     // Aggregate to get unique categories across all apps
-    const categoriesResult = await ForgeAppModel.aggregate([
-      { $unwind: '$categories' },
-      { $group: { _id: '$categories' } },
-      { $sort: { _id: 1 } }
-    ]);
-
-    // Format the result as an array of category names
-    const categories = categoriesResult.map((item) => item._id);
-
-    res.status(200).json(successResponse(categories));
+    // const categoriesResult = await ForgeAppModel.aggregate([
+    //   { $unwind: '$categories' },
+    //   { $group: { _id: '$categories' } },
+    //   { $sort: { _id: 1 } }
+    // ]);
+    //
+    // // Format the result as an array of category names
+    // const categories = categoriesResult.map((item) => item._id);
+    const categories = await  fetch("https://viralmind.ai/api/v1/forge/apps/categories")
+    console.log({categories})
+    res.status(200).json(successResponse((await categories.json()).data));
   })
 );
 // Generate apps endpoint
@@ -290,10 +291,14 @@ router.get(
             pool_id: app.pool_id
           }
         });
+
       }
     }
 
-    res.status(200).json(successResponse(tasks));
+    const temp = await fetch("https://viralmind.ai/api/v1/forge/apps/tasks?max_reward=500&categories=&hide_adult=true")
+    console.log({temp})
+    res.status(200).json(successResponse(await temp.json()).data);
+    // res.status(200).json(successResponse(tasks));
   })
 );
 
