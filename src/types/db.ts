@@ -198,7 +198,7 @@ export interface DBTrainingPool {
   funds: number;
   pricePerDemo: number;
   token: {
-    type: 'SOL' | 'VIRAL' | 'CUSTOM';
+    type: 'SOL' | 'OMNIS' | 'CUSTOM';
     symbol: string;
     address: string;
   };

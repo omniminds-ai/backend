@@ -139,10 +139,10 @@ router.post(
       skills,
       token,
       ownerAddress,
-      status: TrainingPoolStatus.noFunds,
+      status: TrainingPoolStatus.live  ,//OM-TODO: use TrainingPoolStatus.noFunds, using live for now
       demonstrations: 0,
       funds: 0,
-      pricePerDemo: pricePerDemo ? Math.max(1, pricePerDemo) : 10, // Default to 10 if not provided, minimum of 1
+      pricePerDemo: pricePerDemo ? Math.max(0, pricePerDemo) : 0, // Default to 10 if not provided, minimum of 1
       depositAddress,
       depositPrivateKey
     });

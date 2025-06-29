@@ -12,11 +12,11 @@ const trainingPoolSchema = new mongoose.Schema<DBTrainingPool>(
     },
     demonstrations: { type: Number, default: 0 },
     funds: { type: Number, default: 0 },
-    pricePerDemo: { type: Number, default: 10, min: 1 },
+    pricePerDemo: { type: Number, default: 10, min: 0 },
     token: {
       type: {
         type: String,
-        enum: ['SOL', 'VIRAL', 'CUSTOM'],
+        enum: ['SOL', 'OMNIS', 'CUSTOM'],
         required: true
       },
       symbol: { type: String, required: true },

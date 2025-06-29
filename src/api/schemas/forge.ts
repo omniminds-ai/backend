@@ -5,7 +5,7 @@ import { ValidationSchema, ValidationRules } from '../../middleware/validator.ts
 export const chatRequestSchema: ValidationSchema = {
   messages: {
     required: true,
-    rules: [ValidationRules.isArray(), ValidationRules.isNonEmptyArray()]
+    rules: [ValidationRules.isArray()]
   },
   task_prompt: {
     required: true,
@@ -59,7 +59,7 @@ export const createPoolSchema: ValidationSchema = {
   },
   pricePerDemo: {
     required: false,
-    rules: [ValidationRules.isNumber(), ValidationRules.min(1)]
+    rules: [ValidationRules.isNumber(), ValidationRules.min(0)]
   },
   apps: {
     required: false,

@@ -103,11 +103,13 @@ router.post(
       ]
     } as any);
 
+
     const assistantMessage = response.choices[0].message;
 
     // Handle tool calls if present
     if (assistantMessage.tool_calls?.length) {
       const toolCall = assistantMessage.tool_calls[0];
+      console.log({toolCall})
       // Add tool call to response
       res.status(200).json(
         successResponse({

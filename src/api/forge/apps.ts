@@ -63,9 +63,8 @@ router.post(
     if (!content) {
       throw new Error('Empty response from OpenAI');
     }
-
-    // Parse JSON content
-    try {
+     // Parse JSON content
+     try {
       const parsedContent = JSON.parse(content);
       res.status(200).json(
         successResponse({
@@ -155,7 +154,7 @@ router.get(
     // Get all apps matching the initial query
     let apps = await ForgeAppModel.find(appQuery).populate(
       'pool_id',
-      'name status pricePerDemo uploadLimit'
+      'name status pricePerDemo uploadLimit token'
     );
 
     // Filter by live pools if no specific pool_id was provided
@@ -288,17 +287,14 @@ router.get(
             gymLimitType: pool.uploadLimit?.limitType,
             gymSubmissions: gymSubmissions,
             gymLimitValue: pool.uploadLimit?.type,
-            pool_id: app.pool_id
+            pool: app.pool_id
           }
         });
 
       }
     }
 
-    const temp = await fetch("https://viralmind.ai/api/v1/forge/apps/tasks?max_reward=500&categories=&hide_adult=true")
-    console.log({temp})
-    res.status(200).json(successResponse(await temp.json()).data);
-    // res.status(200).json(successResponse(tasks));
+    res.status(200).json(successResponse(tasks));
   })
 );
 
@@ -331,7 +327,8 @@ router.get(
       }
 
       // Get matching pool IDs
-      const pools = await TrainingPoolModel.find(poolQuery).select('_id');
+      const pools = await TrainingPoolModel.find(poolQuery).select('_id token');
+      console.log({pools})
       poolIds = pools.map((pool) => pool._id.toString());
 
       // If no pools match the reward criteria, return empty array early
