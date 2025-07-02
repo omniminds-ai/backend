@@ -94,11 +94,19 @@ async function connectToDatabase() {
     };
     if (true || process.env.NODE_ENV === 'production') {
       // Create a Mongoose client with a MongoClientOptions object to set the Stable API version
+      const dbCertJson = process.env.DB_CERT
+      if(!dbCertJson) {
+        throw new Error(
+          'DB_CERT Env var not found not found.'
+        );
+      }
+      const dbCert = JSON.parse(dbCertJson);
       const tlsCAFile = path.resolve('./db-cert.pem');
+      fs.writeFileSync(tlsCAFile, dbCert.cert, 'utf8');
       // Verify the certificate file exists
       if (!fs.existsSync(tlsCAFile)) {
         throw new Error(
-          'TLS CA File not found. Please ensure aws-global-bundle.pem is present in the root directory'
+          'TLS CA File not found. '
         );
       }
       clientOptions = {
