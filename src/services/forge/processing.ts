@@ -86,59 +86,64 @@ export async function processNextInQueue() {
       const files = await fs.readdir(extractDir);
       console.log('Directory contents:', files);
 
-      await new Promise<void>((resolve, reject) => {
-        const process = spawn('/usr/src/app/backend/pipeline', [
-          '-f',
-          'desktop',
-          '-i',
-          extractDir,
-          '--grade'
-        ]);
-
-        let stdout = '';
-        let stderr = '';
-
-        process.stdout.on('data', (data) => {
-          stdout += data;
-          console.log('Pipeline stdout:', data.toString());
-        });
-
-        process.stderr.on('data', (data) => {
-          stderr += data;
-          console.error('Pipeline stderr:', data.toString());
-        });
-
-        process.on('close', (code: number) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            console.error('Pipeline stdout:', stdout);
-            console.error('Pipeline stderr:', stderr);
-            reject(new Error(`Pipeline failed:\nstdout: ${stdout}\nstderr: ${stderr}`));
-          }
-        });
-
-        process.on('error', (err) => {
-          console.error('Pipeline spawn error:', err);
-          reject(err);
-        });
-      });
+      // OM-TODO: activate pipeline
+      // await new Promise<void>((resolve, reject) => {
+      //   const process = spawn('/usr/src/app/backend/pipeline', [
+      //     '-f',
+      //     'desktop',
+      //     '-i',
+      //     extractDir,
+      //     '--grade'
+      //   ]);
+      //
+      //   let stdout = '';
+      //   let stderr = '';
+      //
+      //   process.stdout.on('data', (data) => {
+      //     stdout += data;
+      //     console.log('Pipeline stdout:', data.toString());
+      //   });
+      //
+      //   process.stderr.on('data', (data) => {
+      //     stderr += data;
+      //     console.error('Pipeline stderr:', data.toString());
+      //   });
+      //
+      //   process.on('close', (code: number) => {
+      //     if (code === 0) {
+      //       resolve();
+      //     } else {
+      //       console.error('Pipeline stdout:', stdout);
+      //       console.error('Pipeline stderr:', stderr);
+      //       reject(new Error(`Pipeline failed:\nstdout: ${stdout}\nstderr: ${stderr}`));
+      //     }
+      //   });
+      //
+      //   process.on('error', (err) => {
+      //     console.error('Pipeline spawn error:', err);
+      //     reject(err);
+      //   });
+      // });
 
       // Check if scores.json exists
-      const scoresPath = path.join(extractDir, 'scores.json');
-      try {
-        await fs.access(scoresPath);
-        console.log('scores.json exists');
-      } catch (error) {
-        console.error('scores.json not found:', error);
-        throw new Error('scores.json not found after pipeline run');
-      }
-
-      // Read and parse scores.json
-      console.log('Reading scores.json');
-      const scoresContent = await fs.readFile(scoresPath, 'utf8');
-      console.log('scores.json content:', scoresContent);
-      const gradeResult: ForgeSubmissionGradeResult = JSON.parse(scoresContent);
+      // const scoresPath = path.join(extractDir, 'scores.json');
+      // try {
+      //   await fs.access(scoresPath);
+      //   console.log('scores.json exists');
+      // } catch (error) {
+      //   console.error('scores.json not found:', error);
+      //   throw new Error('scores.json not found after pipeline run');
+      // }
+      //
+      // // Read and parse scores.json
+      // console.log('Reading scores.json');
+      // const scoresContent = await fs.readFile(scoresPath, 'utf8');
+      // console.log('scores.json content:', scoresContent);
+      const gradeResult: ForgeSubmissionGradeResult = {
+        summary: "Scoring is currently disabled",
+        score: 0,
+        reasoning: "We're in beta"
+      } //JSON.parse(scoresContent);
       console.log('Parsed grade result:', gradeResult);
 
       // Get pool details and calculate reward
@@ -279,12 +284,14 @@ export async function processNextInQueue() {
               }
             }
 
+
+            // OM-TODO: Enable when scoring actually happens
             // Check 6: Score threshold
-            if (clampedScore < 50) {
-              reward = 0;
-              gradeResult.reasoning = `( system: reward returned to pool due to <50% quality score ) ${gradeResult.reasoning}`;
-              break;
-            }
+            // if (clampedScore < 50) {
+            //   reward = 0;
+            //   gradeResult.reasoning = `( system: reward returned to pool due to <50% quality score ) ${gradeResult.reasoning}`;
+            //   break;
+            // }
 
             // All checks passed, calculate reward
             reward = Math.max(0, Math.min(maxReward, (maxReward * clampedScore) / 100));
@@ -302,46 +309,48 @@ export async function processNextInQueue() {
 
               if (process.env.NODE_ENV === 'development') break;
 
-              try {
-                console.log('Attempting blockchain transfer');
-                // Create keypair from private key
-                const fromWallet = Keypair.fromSecretKey(
-                  Buffer.from(pool.depositPrivateKey, 'base64')
-                );
-
+              // OM-TODO: enable transfer and activate rewards
+              // try
+              // {
+              //   console.log('Attempting blockchain transfer');
+              //   // Create keypair from private key
+              //   const fromWallet = Keypair.fromSecretKey(
+              //     Buffer.from(pool.depositPrivateKey, 'base64')
+              //   );
+              //
                 // Get initial treasury balance
                 const blockchainService = new (await import('../blockchain/index.js')).default(
                   process.env.SOLANA_RPC_URL || '',
                   '' // Program ID not needed for token transfers
                 );
-
-                const treasuryBalance = await blockchainService.getTokenBalance(
-                  pool.token.address,
-                  pool.depositAddress
-                );
-                console.log('Initial treasury balance:', treasuryBalance);
-
-                // Attempt blockchain transfer
-                try {
-                  const result = await blockchainService.transferToken(
-                    pool.token.address,
-                    reward,
-                    fromWallet,
-                    submission.address
-                  );
-
-                  if (result && treasuryTransfer) {
-                    treasuryTransfer.txHash = result.signature;
-                  }
-                } catch (e) {
-                  if ((e as Error).message === 'Pool SOL balance insufficient for gas.') {
-                    // update pool status
-                    pool.status === TrainingPoolStatus.noGas;
-                    await pool.save();
-                  }
-                  throw e;
-                }
-
+              //
+              //   const treasuryBalance = await blockchainService.getTokenBalance(
+              //     pool.token.address,
+              //     pool.depositAddress
+              //   );
+              //   console.log('Initial treasury balance:', treasuryBalance);
+              //
+              //   // Attempt blockchain transfer
+              //   try {
+              //     const result = await blockchainService.transferToken(
+              //       pool.token.address,
+              //       reward,
+              //       fromWallet,
+              //       submission.address
+              //     );
+              //
+              //     if (result && treasuryTransfer) {
+              //       treasuryTransfer.txHash = result.signature;
+              //     }
+              //   } catch (e) {
+              //     if ((e as Error).message === 'Pool SOL balance insufficient for gas.') {
+              //       // update pool status
+              //       pool.status === TrainingPoolStatus.noGas;
+              //       await pool.save();
+              //     }
+              //     throw e;
+              //   }
+              //
                 // Get final treasury balance
                 const finalBalance = await blockchainService.getTokenBalance(
                   pool.token.address,
@@ -370,28 +379,28 @@ export async function processNextInQueue() {
                   address: submission.address,
                   pool: poolInfo
                 });
-              } catch (error) {
-                console.error('Treasury transfer failed:', error);
-                // Update submission with error
-                await ForgeRaceSubmissionModel.findByIdAndUpdate(submissionId, {
-                  status: ForgeSubmissionProcessingStatus.FAILED,
-                  error:
-                    'Gym payment failed. This gym has been paused until transaction issues are resolved.'
-                });
-                // Continue processing but log the error
-                await notifyForgeWebhook('transfer-error', {
-                  title: submission?.meta?.quest.title,
-                  reward,
-                  error: (error as Error).message,
-                  address: submission.address,
-                  pool: {
-                    name: pool.name,
-                    token: pool.token
-                  }
-                });
-              }
+              // } catch (error) {
+              //   console.error('Treasury transfer failed:', error);
+              //   // Update submission with error
+              //   await ForgeRaceSubmissionModel.findByIdAndUpdate(submissionId, {
+              //     status: ForgeSubmissionProcessingStatus.FAILED,
+              //     error:
+              //       'Gym payment failed. This gym has been paused until transaction issues are resolved.'
+              //   });
+              // //   Continue processing but log the error
+              //   await notifyForgeWebhook('transfer-error', {
+              //     title: submission?.meta?.quest.title,
+              //     reward,
+              //     error: (error as Error).message,
+              //     address: submission.address,
+              //     pool: {
+              //       name: pool.name,
+              //       token: pool.token
+              //     }
+              //   });
+              // }
             }
-
+            console.log("finished successfully")
             break; // Exit retry loop if successful
           } catch (error) {
             retries--;

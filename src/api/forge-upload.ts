@@ -389,7 +389,7 @@ router.post(
 
     // Upload each file to S3
     console.log(`[UPLOAD] Starting S3 upload for ${requiredFiles.length} files`);
-    const s3Service = new AWSS3Service(process.env.AWS_ACCESS_KEY, process.env.AWS_SECRET_KEY);
+    const s3Service = new AWSS3Service(process.env.DO_SPACE_ACCESS_KEY, process.env.DO_SPACE_SECRET_KEY);
     const uploads = await Promise.all(
       requiredFiles.map(async (file) => {
         const filePath = path.join(finalDir, file);
@@ -401,7 +401,7 @@ router.post(
         );
 
         await s3Service.saveItem({
-          bucket: 'training-gym',
+          bucket: process.env.DO_SPACE_TRAINING_BUCKET_NAME,
           file: filePath,
           name: s3Key
         });
