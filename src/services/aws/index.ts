@@ -8,7 +8,8 @@ export class AWSS3Service {
     if (!secretAccessKey) throw Error('Cannot initialize S3 client. Secret key not provided.');
     this.client = new S3Client({
       credentials: { accessKeyId, secretAccessKey },
-      region: 'us-east-2'
+      region: 'ams3',
+      endpoint: process.env.DO_SPACE_ENDPOINT
     });
   }
 
