@@ -48,7 +48,7 @@ RUN apt-get update && \
 #  cd .. && \
 #  rm -rf guacamole-server && \
 #  apt-get remove -y git autoconf libtool && \
-   apt-get autoremove -y && \
+#   apt-get autoremove -y && \
    rm -rf /var/lib/apt/lists/*
 
 RUN npm ci
