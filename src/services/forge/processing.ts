@@ -86,64 +86,59 @@ export async function processNextInQueue() {
       const files = await fs.readdir(extractDir);
       console.log('Directory contents:', files);
 
-      // OM-TODO: activate pipeline
-      // await new Promise<void>((resolve, reject) => {
-      //   const process = spawn('/usr/src/app/backend/analyze-training', [
-      //     '-f',
-      //     'desktop',
-      //     '-i',
-      //     extractDir,
-      //     '--grade'
-      //   ]);
-      //
-      //   let stdout = '';
-      //   let stderr = '';
-      //
-      //   process.stdout.on('data', (data) => {
-      //     stdout += data;
-      //     console.log('Pipeline stdout:', data.toString());
-      //   });
-      //
-      //   process.stderr.on('data', (data) => {
-      //     stderr += data;
-      //     console.error('Pipeline stderr:', data.toString());
-      //   });
-      //
-      //   process.on('close', (code: number) => {
-      //     if (code === 0) {
-      //       resolve();
-      //     } else {
-      //       console.error('Pipeline stdout:', stdout);
-      //       console.error('Pipeline stderr:', stderr);
-      //       reject(new Error(`Pipeline failed:\nstdout: ${stdout}\nstderr: ${stderr}`));
-      //     }
-      //   });
-      //
-      //   process.on('error', (err) => {
-      //     console.error('Pipeline spawn error:', err);
-      //     reject(err);
-      //   });
-      // });
+      await new Promise<void>((resolve, reject) => {
+        const process = spawn('/Users/farag/w/omniminds/analyze-training/target/analyze-training-macos-arm64', [
+          '-f',
+          'desktop',
+          '-i',
+          extractDir,
+          '--grade'
+        ]);
+
+        let stdout = '';
+        let stderr = '';
+
+        process.stdout.on('data', (data) => {
+          stdout += data;
+          console.log('Pipeline stdout:', data.toString());
+        });
+
+        process.stderr.on('data', (data) => {
+          stderr += data;
+          console.error('Pipeline stderr:', data.toString());
+        });
+
+        process.on('close', (code: number) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            console.error('Pipeline stdout:', stdout);
+            console.error('Pipeline stderr:', stderr);
+            reject(new Error(`Pipeline failed:\nstdout: ${stdout}\nstderr: ${stderr}`));
+          }
+        });
+
+        process.on('error', (err) => {
+          console.error('Pipeline spawn error:', err);
+          reject(err);
+        });
+      });
 
       // Check if scores.json exists
-      // const scoresPath = path.join(extractDir, 'scores.json');
-      // try {
-      //   await fs.access(scoresPath);
-      //   console.log('scores.json exists');
-      // } catch (error) {
-      //   console.error('scores.json not found:', error);
-      //   throw new Error('scores.json not found after pipeline run');
-      // }
-      //
-      // // Read and parse scores.json
-      // console.log('Reading scores.json');
-      // const scoresContent = await fs.readFile(scoresPath, 'utf8');
-      // console.log('scores.json content:', scoresContent);
-      const gradeResult: ForgeSubmissionGradeResult = {
-        summary: "Scoring is currently disabled",
-        score: 0,
-        reasoning: "We're in beta"
-      } //JSON.parse(scoresContent);
+      const scoresPath = path.join(extractDir, 'scores.json');
+      try {
+        await fs.access(scoresPath);
+        console.log('scores.json exists');
+      } catch (error) {
+        console.error('scores.json not found:', error);
+        throw new Error('scores.json not found after pipeline run');
+      }
+
+      // Read and parse scores.json
+      console.log('Reading scores.json');
+      const scoresContent = await fs.readFile(scoresPath, 'utf8');
+      console.log('scores.json content:', scoresContent);
+      const gradeResult: ForgeSubmissionGradeResult = JSON.parse(scoresContent);
       console.log('Parsed grade result:', gradeResult);
 
       // Get pool details and calculate reward
@@ -285,13 +280,12 @@ export async function processNextInQueue() {
             }
 
 
-            // OM-TODO: Enable when scoring actually happens
             // Check 6: Score threshold
-            // if (clampedScore < 50) {
-            //   reward = 0;
-            //   gradeResult.reasoning = `( system: reward returned to pool due to <50% quality score ) ${gradeResult.reasoning}`;
-            //   break;
-            // }
+            if (clampedScore < 50) {
+              reward = 0;
+              gradeResult.reasoning = `( system: reward returned to pool due to <50% quality score ) ${gradeResult.reasoning}`;
+              break;
+            }
 
             // All checks passed, calculate reward
             reward = Math.max(0, Math.min(maxReward, (maxReward * clampedScore) / 100));
