@@ -37,7 +37,7 @@ RUN apt-get update && \
   libssl-dev \
   libvorbis-dev \
   libwebp-dev \
-  git #&& \
+  git \
 #  git clone https://github.com/apache/guacamole-server.git && \
 #  cd guacamole-server && \
 #  autoreconf -fi && \
@@ -48,8 +48,8 @@ RUN apt-get update && \
 #  cd .. && \
 #  rm -rf guacamole-server && \
 #  apt-get remove -y git autoconf libtool && \
-#  apt-get autoremove -y && \
-#  rm -rf /var/lib/apt/lists/*
+   apt-get autoremove -y && \
+   rm -rf /var/lib/apt/lists/*
 
 RUN npm ci
 RUN npm install --cpu=x64 --os=linux --libc=glibc sharp
