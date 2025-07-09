@@ -88,7 +88,7 @@ export async function processNextInQueue() {
 
       // OM-TODO: activate pipeline
       // await new Promise<void>((resolve, reject) => {
-      //   const process = spawn('/usr/src/app/backend/pipeline', [
+      //   const process = spawn('/usr/src/app/backend/analyze-training', [
       //     '-f',
       //     'desktop',
       //     '-i',

@@ -17,7 +17,7 @@ RUN apt-get update && \
   build-essential \
   python3 \
   ffmpeg \
-  ffpobe \
+  ffprobe \
   autoconf \
   libtool \
   libcairo2-dev \
