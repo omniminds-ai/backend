@@ -37,7 +37,7 @@ RUN apt-get update && \
   libssl-dev \
   libvorbis-dev \
   libwebp-dev \
-  git && \
+  git #&& \
 #  git clone https://github.com/apache/guacamole-server.git && \
 #  cd guacamole-server && \
 #  autoreconf -fi && \
