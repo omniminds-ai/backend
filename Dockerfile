@@ -9,7 +9,7 @@ COPY package*.json ./
 # pull the aws documentdb cert and pipeline binary
 #ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem ./aws-global-bundle.pem
 ADD https://github.com/omniminds-ai/analyze-training/releases/latest/download/analyze-training-linux-x64 ./analyze-training
-RUN #chmod +x pipeline
+RUN #chmod +x analyze-training
 
 # Install dependencies including guacamole build requirements
 RUN apt-get update && \
@@ -17,6 +17,7 @@ RUN apt-get update && \
   build-essential \
   python3 \
   ffmpeg \
+  ffpobe \
   autoconf \
   libtool \
   libcairo2-dev \
@@ -38,18 +39,18 @@ RUN apt-get update && \
   libvorbis-dev \
   libwebp-dev \
   git && \
-  git clone https://github.com/apache/guacamole-server.git && \
-  cd guacamole-server && \
-  autoreconf -fi && \
-  ./configure --with-init-dir=/etc/init.d && \
-  make && \
-  make install && \
-  ldconfig && \
-  cd .. && \
-  rm -rf guacamole-server && \
-  apt-get remove -y git autoconf libtool && \
-  apt-get autoremove -y && \
-  rm -rf /var/lib/apt/lists/*
+#  git clone https://github.com/apache/guacamole-server.git && \
+#  cd guacamole-server && \
+#  autoreconf -fi && \
+#  ./configure --with-init-dir=/etc/init.d && \
+#  make && \
+#  make install && \
+#  ldconfig && \
+#  cd .. && \
+#  rm -rf guacamole-server && \
+#  apt-get remove -y git autoconf libtool && \
+#  apt-get autoremove -y && \
+#  rm -rf /var/lib/apt/lists/*
 
 RUN npm ci
 RUN npm install --cpu=x64 --os=linux --libc=glibc sharp
