@@ -87,7 +87,7 @@ export async function processNextInQueue() {
       console.log('Directory contents:', files);
 
       await new Promise<void>((resolve, reject) => {
-        const process = spawn('/Users/farag/w/omniminds/analyze-training/target/analyze-training-macos-arm64', [
+        const process = spawn('/usr/src/app/backend/analyze-training', [
           '-f',
           'desktop',
           '-i',
@@ -303,48 +303,47 @@ export async function processNextInQueue() {
 
               if (process.env.NODE_ENV === 'development') break;
 
-              // OM-TODO: enable transfer and activate rewards
-              // try
-              // {
-              //   console.log('Attempting blockchain transfer');
-              //   // Create keypair from private key
-              //   const fromWallet = Keypair.fromSecretKey(
-              //     Buffer.from(pool.depositPrivateKey, 'base64')
-              //   );
-              //
+              try
+              {
+                console.log('Attempting blockchain transfer');
+                // Create keypair from private key
+                const fromWallet = Keypair.fromSecretKey(
+                  Buffer.from(pool.depositPrivateKey, 'base64')
+                );
+
                 // Get initial treasury balance
                 const blockchainService = new (await import('../blockchain/index.js')).default(
                   process.env.SOLANA_RPC_URL || '',
                   '' // Program ID not needed for token transfers
                 );
               //
-              //   const treasuryBalance = await blockchainService.getTokenBalance(
-              //     pool.token.address,
-              //     pool.depositAddress
-              //   );
-              //   console.log('Initial treasury balance:', treasuryBalance);
-              //
-              //   // Attempt blockchain transfer
-              //   try {
-              //     const result = await blockchainService.transferToken(
-              //       pool.token.address,
-              //       reward,
-              //       fromWallet,
-              //       submission.address
-              //     );
-              //
-              //     if (result && treasuryTransfer) {
-              //       treasuryTransfer.txHash = result.signature;
-              //     }
-              //   } catch (e) {
-              //     if ((e as Error).message === 'Pool SOL balance insufficient for gas.') {
-              //       // update pool status
-              //       pool.status === TrainingPoolStatus.noGas;
-              //       await pool.save();
-              //     }
-              //     throw e;
-              //   }
-              //
+                const treasuryBalance = await blockchainService.getTokenBalance(
+                  pool.token.address,
+                  pool.depositAddress
+                );
+                console.log('Initial treasury balance:', treasuryBalance);
+
+                // Attempt blockchain transfer
+                try {
+                  const result = await blockchainService.transferToken(
+                    pool.token.address,
+                    reward,
+                    fromWallet,
+                    submission.address
+                  );
+
+                  if (result && treasuryTransfer) {
+                    treasuryTransfer.txHash = result.signature;
+                  }
+                } catch (e) {
+                  if ((e as Error).message === 'Pool SOL balance insufficient for gas.') {
+                    // update pool status
+                    pool.status === TrainingPoolStatus.noGas;
+                    await pool.save();
+                  }
+                  throw e;
+                }
+
                 // Get final treasury balance
                 const finalBalance = await blockchainService.getTokenBalance(
                   pool.token.address,
@@ -373,26 +372,26 @@ export async function processNextInQueue() {
                   address: submission.address,
                   pool: poolInfo
                 });
-              // } catch (error) {
-              //   console.error('Treasury transfer failed:', error);
-              //   // Update submission with error
-              //   await ForgeRaceSubmissionModel.findByIdAndUpdate(submissionId, {
-              //     status: ForgeSubmissionProcessingStatus.FAILED,
-              //     error:
-              //       'Gym payment failed. This gym has been paused until transaction issues are resolved.'
-              //   });
-              // //   Continue processing but log the error
-              //   await notifyForgeWebhook('transfer-error', {
-              //     title: submission?.meta?.quest.title,
-              //     reward,
-              //     error: (error as Error).message,
-              //     address: submission.address,
-              //     pool: {
-              //       name: pool.name,
-              //       token: pool.token
-              //     }
-              //   });
-              // }
+              } catch (error) {
+                console.error('Treasury transfer failed:', error);
+                // Update submission with error
+                await ForgeRaceSubmissionModel.findByIdAndUpdate(submissionId, {
+                  status: ForgeSubmissionProcessingStatus.FAILED,
+                  error:
+                    'Gym payment failed. This gym has been paused until transaction issues are resolved.'
+                });
+              //   Continue processing but log the error
+                await notifyForgeWebhook('transfer-error', {
+                  title: submission?.meta?.quest.title,
+                  reward,
+                  error: (error as Error).message,
+                  address: submission.address,
+                  pool: {
+                    name: pool.name,
+                    token: pool.token
+                  }
+                });
+              }
             }
             console.log("finished successfully")
             break; // Exit retry loop if successful
