@@ -9,7 +9,7 @@ COPY package*.json ./
 # pull the aws documentdb cert and pipeline binary
 #ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem ./aws-global-bundle.pem
 ADD https://github.com/omniminds-ai/analyze-training/releases/latest/download/analyze-training-linux-x64 ./analyze-training
-RUN #chmod +x analyze-training
+RUN #chmod +x ./analyze-training
 
 # Install dependencies including guacamole build requirements
 RUN apt-get update && \
