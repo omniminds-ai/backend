@@ -26,16 +26,14 @@ router.get(
   '/categories',
   errorHandlerAsync(async (_req: Request, res: Response) => {
     // Aggregate to get unique categories across all apps
-    // const categoriesResult = await ForgeAppModel.aggregate([
-    //   { $unwind: '$categories' },
-    //   { $group: { _id: '$categories' } },
-    //   { $sort: { _id: 1 } }
-    // ]);
-    //
-    // // Format the result as an array of category names
-    // const categories = categoriesResult.map((item) => item._id);
-    const categories = await  fetch("https://viralmind.ai/api/v1/forge/apps/categories")
-    console.log({categories})
+    const categoriesResult = await ForgeAppModel.aggregate([
+      { $unwind: '$categories' },
+      { $group: { _id: '$categories' } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Format the result as an array of category names
+    const categories = categoriesResult.map((item) => item._id);
     res.status(200).json(successResponse((await categories.json()).data));
   })
 );
