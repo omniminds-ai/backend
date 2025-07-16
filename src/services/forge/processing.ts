@@ -238,7 +238,7 @@ export async function processNextInQueue() {
 
               if (taskSubmissionsCount >= task.uploadLimit) {
                 reward = 0;
-                gradeResult.reasoning = `( system: no reward given - per-task upload limit of ${task.uploadLimit} reached ) ${gradeResult.reasoning}`;
+                gradeResult.reasoning = `( system: no reward given - upload limit of ${task.uploadLimit} for this task per wallet reached ) ${gradeResult.reasoning}`;
                 break;
               }
             }
@@ -317,7 +317,7 @@ export async function processNextInQueue() {
                   '' // Program ID not needed for token transfers
                 );
               //
-                const treasuryBalance = await blockchainService.getTokenBalance(
+                const treasuryBalance = await blockchainService.getBalance(
                   pool.token.address,
                   pool.depositAddress
                 );
@@ -325,7 +325,8 @@ export async function processNextInQueue() {
 
                 // Attempt blockchain transfer
                 try {
-                  const result = await blockchainService.transferToken(
+
+                  const result = await blockchainService.transferReward(
                     pool.token.address,
                     reward,
                     fromWallet,
@@ -345,7 +346,7 @@ export async function processNextInQueue() {
                 }
 
                 // Get final treasury balance
-                const finalBalance = await blockchainService.getTokenBalance(
+                const finalBalance = await blockchainService.getBalance(
                   pool.token.address,
                   pool.depositAddress
                 );

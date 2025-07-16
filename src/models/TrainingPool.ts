@@ -16,7 +16,7 @@ const trainingPoolSchema = new mongoose.Schema<DBTrainingPool>(
     token: {
       type: {
         type: String,
-        enum: ['SOL', 'OMNIS', 'CUSTOM'],
+        enum: ['SOL', 'TOKEN'],
         required: true
       },
       symbol: { type: String, required: true },
