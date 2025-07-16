@@ -33,6 +33,7 @@ export const forgeRaceSubmissionSchema = new mongoose.Schema<DBForgeRaceSubmissi
     treasuryTransfer: {
       type: {
         tokenAddress: String,
+        tokenSymbol: String,
         treasuryWallet: String,
         amount: Number,
         timestamp: Number,

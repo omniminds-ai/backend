@@ -141,6 +141,7 @@ export interface DBForgeRaceSubmission {
   clampedScore?: number;
   treasuryTransfer?: {
     tokenAddress?: string;
+    tokenSymbol?: string;
     treasuryWallet?: string;
     amount?: number;
     timestamp?: number;

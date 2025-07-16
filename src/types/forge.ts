@@ -145,6 +145,7 @@ export interface ForgeSubmissionGradeResult {
 // Interface for treasury transfer details
 export interface ForgeTreasuryTransfer {
   tokenAddress: string;
+  tokenSymbol: string;
   treasuryWallet: string;
   amount: number;
   timestamp: number;

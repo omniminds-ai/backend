@@ -294,6 +294,7 @@ export async function processNextInQueue() {
             if (reward && reward > 0) {
               treasuryTransfer = {
                 tokenAddress: pool.token.address,
+                tokenSymbol: pool.token.symbol,
                 treasuryWallet: pool.depositAddress,
                 amount: reward,
                 timestamp: Date.now()
