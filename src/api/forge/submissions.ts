@@ -82,6 +82,7 @@ router.get(
         meta: submission.meta,
         files: submission.files,
         reward: submission.reward,
+        rewardSymbol: submission.treasuryTransfer?.tokenSymbol,
         maxReward: submission.maxReward,
         clampedScore: submission.clampedScore,
         createdAt: submission.createdAt,
