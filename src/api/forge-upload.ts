@@ -433,7 +433,7 @@ router.post(
       }
 
       // Get current token balance from blockchain to ensure it's up-to-date
-      const currentBalance = await blockchainService.getTokenBalance(
+      const currentBalance = await blockchainService.getBalance(
         pool.token.address,
         pool.depositAddress
       );

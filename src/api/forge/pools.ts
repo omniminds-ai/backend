@@ -58,8 +58,16 @@ router.post(
       'meta.quest.pool_id': pool._id.toString()
     });
 
-    // Return pool without private key but with demo count and noGas flag
     const { depositPrivateKey: _, ...poolObj } = pool.toObject();
+
+    console.log({
+      ...poolObj,
+      demonstrations: demoCount,
+      solBalance
+    })
+
+    // Return pool without private key but with demo count and noGas flag
+
     res.status(200).json(
       successResponse({
         ...poolObj,
@@ -292,6 +300,7 @@ router.get(
   '/reward',
   validateQuery(rewardQuerySchema),
   errorHandlerAsync(async (req: Request, res: Response) => {
+
     const { poolId } = req.query;
 
     // Get the pool to check pricePerDemo
@@ -299,6 +308,8 @@ router.get(
     if (!pool) {
       throw ApiError.notFound('Pool not found');
     }
+
+    await updatePoolStatus(pool)
 
     // Check if pool has enough funds for at least one demo
     if (pool.funds < pool.pricePerDemo) {
@@ -321,7 +332,8 @@ router.get(
       successResponse({
         time: currentTime,
         maxReward: reward,
-        pricePerDemo: pool.pricePerDemo
+        pricePerDemo: pool.pricePerDemo,
+        symbol: pool.token.symbol
       })
     );
   })

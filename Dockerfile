@@ -3,11 +3,8 @@ FROM node:lts-bookworm
 WORKDIR /usr/src/app/backend/
 #
 COPY package*.json ./
-#COPY jailbreak-pool/Anchor.toml ./
-#COPY jailbreak-pool/target ./target
 
-# pull the aws documentdb cert and pipeline binary
-#ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem ./aws-global-bundle.pem
+# pull analyze-training binary and make it executable
 ADD https://github.com/omniminds-ai/analyze-training/releases/latest/download/analyze-training-linux-x64 ./analyze-training
 RUN chmod +x ./analyze-training
 

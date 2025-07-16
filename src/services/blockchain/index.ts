@@ -28,11 +28,15 @@ class BlockchainService {
   }
 
   static get MIN_SOL_BALANCE(): number {
-    return 0.017;
+    return 0.01;
+  }
+
+  static get SOL_ADDRESS(): string {
+    return 'So11111111111111111111111111111111111111112'
   }
 
   static async getSolPriceInUSDT() {
-    let defaultSolPrice = 230;
+    let defaultSolPrice = 150;
 
     try {
       const tokenPage = await DatabaseService.getPages({ name: 'omnis-token' });
@@ -59,10 +63,32 @@ class BlockchainService {
     }
   }
 
+  async getBalance(tokenMint: string, walletAddress: string): Promise<number> {
+    try {
+      if(tokenMint == BlockchainService.SOL_ADDRESS){
+        return await this.getSolBalance(walletAddress);
+      }
+      return await this.getTokenBalance(tokenMint, walletAddress);
+    } catch (error) {
+    console.error('Error getting balance:', error);
+    return 0;
+  }
+  }
+
   async getSolBalance(walletAddress: string): Promise<number> {
     try {
       const walletPubkey = new PublicKey(walletAddress);
       const balance = await this.connection.getBalance(walletPubkey);
+      return balance / LAMPORTS_PER_SOL;
+    } catch (error) {
+      console.error('Error getting SOL balance:', error);
+      return 0;
+    }
+  }
+
+  async getSolBalanceFromPublicKey(publicKey: PublicKey): Promise<number> {
+    try {
+      const balance = await this.connection.getBalance(publicKey);
       return balance / LAMPORTS_PER_SOL;
     } catch (error) {
       console.error('Error getting SOL balance:', error);
@@ -78,10 +104,11 @@ class BlockchainService {
 
       // Get the associated token account address
       const tokenAccountAddress = getAssociatedTokenAddressSync(mintPubkey, walletPubkey);
-
+      console.log({ mintPubkey, walletPubkey, tokenAccountAddress });
       try {
         // Get the token account info
         const tokenAccountInfo = await this.connection.getTokenAccountBalance(tokenAccountAddress);
+        console.log({ mintPubkey, walletPubkey, tokenAccountInfo, tokenAccountAddress });
         return tokenAccountInfo.value.uiAmount || 0;
       } catch (error) {
         // If the token account doesn't exist, return 0
@@ -98,6 +125,37 @@ class BlockchainService {
     } catch (error) {
       console.error('Error getting token balance:', error);
       return 0;
+    }
+  }
+
+  async getNetworkFees(): Promise<{ low: number, medium: number, high: number, urgent:number }> {
+    try {
+      const fees = await this.connection.getRecentPrioritizationFees();
+
+      const feeValues = fees.map(f => f.prioritizationFee).filter(f => f > 0);
+
+      if (feeValues.length === 0) {
+        throw new Error("Could not get recent prioritization fees");
+      }
+
+      // Sort fees to get percentiles
+      feeValues.sort((a, b) => a - b);
+
+      return {
+        low: feeValues[Math.floor(feeValues.length * 0.25)],      // 25th percentile
+        medium: feeValues[Math.floor(feeValues.length * 0.5)],    // 50th percentile (median)
+        high: feeValues[Math.floor(feeValues.length * 0.75)],     // 75th percentile
+        urgent: feeValues[Math.floor(feeValues.length * 0.95)]    // 95th percentile
+      };
+    } catch (error) {
+      console.error('Failed to fetch network:', error);
+      // Return a reasonable default if the API call fails
+      return {
+        low: 1_000_000,
+        medium: 2_000_000,
+        high: 3_000_000,
+        urgent: 5_000_000
+      };
     }
   }
 
@@ -131,19 +189,140 @@ class BlockchainService {
     }
   }
 
+  async transferReward(
+    tokenMint: string,
+    amount: number,
+    fromWallet: Keypair,
+    toAddress: string
+  ): Promise<{ signature: string; usedFee: number } | false> {
+    try {
+      if(tokenMint === BlockchainService.SOL_ADDRESS) {
+        return await this.transferSol(amount, fromWallet, toAddress);
+      }
+
+      return await this.transferToken(tokenMint, amount, fromWallet, toAddress);
+
+    } catch {
+
+      return false
+    }
+  }
+
+  async transferSol(
+    amount: number,
+    fromWallet: Keypair,
+    toAddress: string,
+    retryCount: number = 0
+  ) : Promise<{ signature: string; usedFee: number } | false> {
+    try {
+      if (!fromWallet || !toAddress || amount <= 0) {
+        throw new Error('Invalid input parameters');
+      }
+
+      const toPublicKey = new PublicKey(toAddress);
+      const transferLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: fromWallet.publicKey,
+        toPubkey: toPublicKey,
+        lamports: transferLamports,
+      });
+
+      const transaction = new Transaction();
+
+      const priorityFeeMultipliers = [0, 0.1, 0.5, 1.0]
+      const priorityFees = await this.connection.getRecentPrioritizationFees();
+      const avgFee = priorityFees.reduce((sum, fee) => sum + fee.prioritizationFee, 0) / priorityFees.length;
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: 200_000,
+        })
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: Math.ceil(avgFee * priorityFeeMultipliers[retryCount]),
+        })
+      );
+
+      transaction.add(transferInstruction);
+
+      // Get recent blockhash
+      const latestBlockHash= await this.connection.getLatestBlockhash();
+      transaction.recentBlockhash = latestBlockHash.blockhash;
+      transaction.feePayer = fromWallet.publicKey;
+
+      const feeLamports = (await this.connection.getFeeForMessage(transaction.compileMessage())).value || 1_000_000;
+
+      const balance = await this.getSolBalanceFromPublicKey(fromWallet.publicKey) * LAMPORTS_PER_SOL
+      if (balance < (transferLamports + feeLamports)) {
+        throw new Error('Insufficient balance to cover transfer + fees');
+      }
+
+      // Sign and send transaction
+      const signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [fromWallet],
+        {
+          commitment: 'confirmed',
+          preflightCommitment: 'confirmed',
+          maxRetries: 5
+        }
+      );
+
+      const txDetails = await this.connection.getTransaction(signature, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0
+      });
+
+
+
+      console.log(
+        '\x1b[32m',
+        `Transaction Success!🎉 (${txDetails?.meta?.fee} fee)`,
+        `\n    https://solscan.io/tx/${signature}`
+      );
+
+      return {
+        signature,
+        usedFee: txDetails?.meta?.fee || 0 / LAMPORTS_PER_SOL
+
+      };
+
+    } catch (error: any) {
+      if (error.message.includes('with insufficient funds for rent')) {
+        // account is out of SOL for gas
+        throw new Error('Pool SOL balance insufficient for gas.');
+      }
+      console.error('\x1b[31m', 'Transfer failed:', {
+        message: error.message,
+        logs: error?.logs
+      });
+
+      // Retry
+      if (retryCount < 3) {
+        console.log(`Retrying with higher fee percentage...`);
+        return this.transferSol(amount, fromWallet, toAddress, retryCount + 1);
+      }
+
+      return false;
+    }
+  }
+
   async transferToken(
     tokenMint: string,
     amount: number,
     fromWallet: Keypair,
     toAddress: string,
     retryCount: number = 0
-  ): Promise<{ signature: string; usedFeePercentage: number } | false> {
+  ): Promise<{ signature: string; usedFee: number } | false> {
     try {
-      const feePercentages = [0.01, 0.1, 0.5, 1.0];
-      const currentFeePercentage = feePercentages[retryCount] || 1.0;
+      const feePriority = ["low", "medium", "high", "urgent"];
 
       console.log(
-        `Attempt ${retryCount + 1} with ${currentFeePercentage * 100}% of base priority fee`
+        `Attempt ${retryCount + 1} with ${feePriority[retryCount]} priority fee`
       );
 
       const sourceAccount = await getOrCreateAssociatedTokenAccount(
@@ -163,10 +342,11 @@ class BlockchainService {
       const tokenInfo = await this.connection.getParsedAccountInfo(new PublicKey(tokenMint));
       const decimals = (tokenInfo.value?.data as any).parsed.info.decimals;
 
-      const basePriorityFee = await this.getQuickNodePriorityFees();
-      const adjustedPriorityFee = Math.floor(basePriorityFee * currentFeePercentage);
+      const networkFees = await this.getNetworkFees();
+      // @ts-ignore
+      const fee :number = networkFees[feePriority[retryCount]];
 
-      console.log(`Base priority fee: ${basePriorityFee}, Using: ${adjustedPriorityFee}`);
+      console.log(`Used priority fee: ${fee}`);
 
       const transaction = new Transaction();
       const transferAmount = amount * Math.pow(10, decimals);
@@ -182,7 +362,7 @@ class BlockchainService {
 
       transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 300000 }));
       transaction.add(
-        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: adjustedPriorityFee })
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: fee })
       );
 
       const latestBlockHash = await this.connection.getLatestBlockhash('confirmed');
@@ -201,13 +381,13 @@ class BlockchainService {
 
       console.log(
         '\x1b[32m',
-        `Transaction Success!🎉 (${currentFeePercentage * 100}% fee)`,
-        `\n    https://explorer.solana.com/tx/${signature}?cluster=mainnet`
+        `Transaction Success!🎉 (${fee} fee)`,
+        `\n    https://solscan.io/tx/${signature}`
       );
 
       return {
         signature,
-        usedFeePercentage: currentFeePercentage * 100
+        usedFee: fee
       };
     } catch (error: any) {
       if (error.message.includes('with insufficient funds for rent')) {

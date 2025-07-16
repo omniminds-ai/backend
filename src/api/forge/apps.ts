@@ -34,7 +34,7 @@ router.get(
 
     // Format the result as an array of category names
     const categories = categoriesResult.map((item) => item._id);
-    res.status(200).json(successResponse((await categories.json()).data));
+    res.status(200).json(successResponse(categories));
   })
 );
 // Generate apps endpoint

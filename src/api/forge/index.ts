@@ -22,13 +22,12 @@ router.use('/apps', forgeAppsApi);
 router.get(
   '/gym',
   errorHandlerAsync(async (_req: Request, res: Response) => {
-    const races = await fetch("https://viralmind.ai/api/v1/forge/gym")
-    // const races = await ForgeRaceModel.find({
-    //   status: 'active',
-    //   type: 'gym'
-    // }).sort({
-    //   createdAt: -1
-    // });
+    const races = await ForgeRaceModel.find({
+      status: 'active',
+      type: 'gym'
+    }).sort({
+      createdAt: -1
+    });
     res.status(200).json(successResponse(races));
   })
 );
