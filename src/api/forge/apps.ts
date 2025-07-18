@@ -221,7 +221,7 @@ router.get(
           (max_reward !== undefined && (effectiveReward || 0) > Number(max_reward))
         ) {
           // Skip this task if it doesn't meet the reward criteria
-          continue;
+         // continue; //OM-TODO: re-enable skipping by limts
         }
 
         // Calculate task limit information
