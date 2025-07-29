@@ -60,7 +60,7 @@ export class Webhook {
       } else if(!payload.telegram_text) {
         console.error('Telegram text required for telegram messages');
       } else {
-        const url = `POST https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
+        const url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
         const response = await fetch(url, {
           method: 'POST',
           headers: {
