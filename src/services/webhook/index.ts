@@ -94,7 +94,7 @@ export class Webhook {
   async sendEmbeds(embeds: Embed[]): Promise<void> {
     const telegram_text = embeds.reduce((a,c) => {
       if(c.title) {
-        a  = `${a}\n\n${c.title}\n-----------`;
+        a  = `${a}\n\n${c.title}`;
       }
       if(c.description) {
         a  = `${a}\n${c.description}`;
