@@ -4,14 +4,20 @@ import { Embed, File, EmbedField, WebhookColor, WebhookPayload } from '../../typ
  * Webhook class for sending Discord webhooks with various content types.
  */
 export class Webhook {
-  private url: string;
+  private discordWebhookUrl: string;
+  private telegramBotToken: string;
+  private telegramChatId: string;
 
   /**
    * Create a new Webhook instance
-   * @param url The webhook URL
+   * @param discordURL The discord webhook URL
+   * @param telegramBotToken The telegram bot Token
+   * @param telegramChatId The telegram Chat Id Token
    */
-  constructor(url: string) {
-    this.url = url;
+  constructor(discordURL: string, telegramBotToken : string, telegramChatId: string) {
+    this.discordWebhookUrl = discordURL;
+    this.telegramBotToken = telegramBotToken;
+    this.telegramChatId = telegramChatId;
   }
 
   /**
@@ -20,32 +26,54 @@ export class Webhook {
    */
   async send(payload: Omit<WebhookPayload, 'url'>): Promise<void> {
     try {
-      if (!this.url) {
-        console.error('Webhook URL is required');
-        return;
-      }
-      const response = await fetch(this.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          content: payload.content,
-          username: payload.username,
-          avatar_url: payload.avatar_url,
-          tts: payload.tts,
-          embeds: payload.embeds,
-          allowed_mentions: payload.allowed_mentions,
-          components: payload.components,
-          flags: payload.flags,
-          thread_name: payload.thread_name,
-          applied_tags: payload.applied_tags
-        })
-      });
+      if (!this.discordWebhookUrl) {
+        console.error('Discord Webhook URL is required for discord messages');
+      } else {
+        const response = await fetch(this.discordWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: payload.content,
+            username: payload.username,
+            avatar_url: payload.avatar_url,
+            tts: payload.tts,
+            embeds: payload.embeds,
+            allowed_mentions: payload.allowed_mentions,
+            components: payload.components,
+            flags: payload.flags,
+            thread_name: payload.thread_name,
+            applied_tags: payload.applied_tags
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`Webhook request failed with status ${response.status}`);
+        if (!response.ok) {
+          console.error(`Webhook request failed with status ${response.status}`);
+        }
       }
+
+      if(!this.telegramBotToken) {
+        console.error('Telegram BotToken is required for telegram messages');
+      } else if(!this.telegramChatId) {
+        console.error('Chat ID required for telegram messages');
+      } else if(!payload.telegram_text) {
+        console.error('Telegram text required for telegram messages');
+      } else {
+        const url = `POST https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: this.telegramChatId,
+            text: payload.telegram_text,
+            parse_mode: "Markdown"
+          })
+        });
+      }
+
     } catch (error) {
       console.error('Error sending webhook:', error);
     }
@@ -64,8 +92,24 @@ export class Webhook {
    * @param embeds The embeds to send
    */
   async sendEmbeds(embeds: Embed[]): Promise<void> {
+    const telegram_text = embeds.reduce((a,c) => {
+      if(c.title) {
+        a  = `${a}\n\n${c.title}\n-----------`;
+      }
+      if(c.description) {
+        a  = `${a}\n${c.description}`;
+      }
+      if(c.fields && c.fields.length > 0) {
+        a  = `${a}\n`;
+        a = `${a}\n${c.fields.reduce((fs, f) => `${fs}\n*${f.name}*: ${f.value}`, "")}`;
+      }
+      return a;
+    },"")
+
+
     return this.send({
-      embeds
+      embeds,
+      telegram_text
     });
   }
 
@@ -109,7 +153,8 @@ export class Webhook {
    */
   async sendText(content: string): Promise<void> {
     return this.send({
-      content
+      content,
+      telegram_text: content
     });
   }
 

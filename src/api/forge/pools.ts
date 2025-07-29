@@ -26,7 +26,9 @@ import { sendEmail } from '../../services/email/index.ts';
 
 // set up the discord webhook
 const FORGE_WEBHOOK = process.env.GYM_FORGE_WEBHOOK;
-const webhook = new Webhook(FORGE_WEBHOOK);
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT = process.env.TELEGRAM_CHAT_ID;
+const webhook = new Webhook(FORGE_WEBHOOK, TELEGRAM_TOKEN, TELEGRAM_CHAT);
 
 const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || '', '');
 

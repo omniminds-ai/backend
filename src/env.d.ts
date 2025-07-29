@@ -46,5 +46,9 @@ declare namespace NodeJS {
     // Guacamole Configuration
     GUACAMOLE_USERNAME: string;
     GUACAMOLE_PASSWORD: string;
+
+    // Telegram
+    TELEGRAM_BOT_TOKEN: string;
+    TELEGRAM_CHAT_ID: string;
   }
 }

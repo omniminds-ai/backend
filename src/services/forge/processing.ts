@@ -17,6 +17,8 @@ import { spawn } from 'child_process';
 import { Webhook } from '../webhook/index.ts';
 
 const FORGE_WEBHOOK = process.env.GYM_FORGE_WEBHOOK;
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT = process.env.TELEGRAM_CHAT_ID;
 
 // Global processing queue
 let isProcessing = false;
@@ -494,8 +496,8 @@ async function notifyForgeWebhook(
     };
   }
 ) {
-  if (!FORGE_WEBHOOK) return;
-  const webhook = new Webhook(FORGE_WEBHOOK);
+  if (!FORGE_WEBHOOK && !TELEGRAM_CHAT && !TELEGRAM_TOKEN) return;
+  const webhook = new Webhook(FORGE_WEBHOOK, TELEGRAM_TOKEN, TELEGRAM_CHAT);
 
   try {
     // Prepare fields based on available data

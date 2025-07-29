@@ -12,8 +12,9 @@ const blockchainService = new BlockchainService(process.env.SOLANA_RPC_URL || ''
 const BALANCE_REFRESH_INTERVAL = 1000 * 60 * 60 * 2; // 2 hours
 // set up the discord webhook
 const FORGE_WEBHOOK = process.env.GYM_FORGE_WEBHOOK;
-const webhook = new Webhook(FORGE_WEBHOOK);
-
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT = process.env.TELEGRAM_CHAT_ID;
+const webhook = new Webhook(FORGE_WEBHOOK, TELEGRAM_TOKEN, TELEGRAM_CHAT);
 // setup llm globals
 const activeGenerations = new Map<string, Promise<void>>();
 const openai = new OpenAI({
