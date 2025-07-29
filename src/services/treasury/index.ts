@@ -26,7 +26,7 @@ export class TreasuryService {
   }
 
   async transferFromTreasury(recipientAddress: string, amount: number): Promise<string | false> {
-    const webhook = new Webhook(this.webhookUrl);
+    const webhook = new Webhook(this.webhookUrl, "", "");
     try {
       const initialBalance = await this.blockchainService.getTokenBalance(
         this.viralToken,
@@ -44,7 +44,7 @@ export class TreasuryService {
         throw new Error('Transfer failed');
       }
 
-      const { signature, usedFeePercentage } = result;
+      const { signature, usedFee } = result;
 
       const finalBalance = await this.blockchainService.getTokenBalance(
         this.viralToken,
@@ -72,7 +72,7 @@ export class TreasuryService {
           },
           {
             name: '💨 Priority Fee Used',
-            value: `${usedFeePercentage}% of base fee`,
+            value: `${usedFee} fee`,
             inline: true
           },
           {

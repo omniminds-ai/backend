@@ -1,4 +1,4 @@
-// Types based on Discord Webhook API
+// Types based on Discord Webhook API & Telegram
 export interface WebhookPayload {
   url: string;
   content?: string;
@@ -12,6 +12,7 @@ export interface WebhookPayload {
   flags?: number;
   thread_name?: string;
   applied_tags?: string[];
+  telegram_text?: string;
 }
 
 export interface Embed {
