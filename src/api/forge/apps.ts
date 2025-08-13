@@ -152,7 +152,7 @@ router.get(
     // Get all apps matching the initial query
     let apps = await ForgeAppModel.find(appQuery).populate(
       'pool_id',
-      'name status pricePerDemo uploadLimit token'
+      'name status pricePerDemo uploadLimit token ownerAddress'
     );
 
     // Filter by live pools if no specific pool_id was provided
