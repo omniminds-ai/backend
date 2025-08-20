@@ -38,49 +38,48 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
   // },
   //basepath/{id}/filename
   let index = 0
+  let total = uploads.length;
   for (const upload of uploads) {
     index++
-    if(index == 10) {
-      break;
-    }
     const uploadPath = path.join(baseDir, upload.id)
     // Read and parse meta.json
-    console.log(`${index} [UPLOAD] Reading meta.json from extracted files`);
+    console.log(`${index}/${total} [UPLOAD] Reading meta.json from extracted files`);
     const metaJsonPath = path.join(uploadPath, metaFile);
-    console.log(`${index} [UPLOAD] Meta JSON path: ${metaJsonPath}`);
+    console.log(`${index}/${total}  [UPLOAD] Meta JSON path: ${metaJsonPath}`);
     const metaJson = await readFile(metaJsonPath, 'utf8');
-    console.log(`${index} [UPLOAD] Meta JSON content length: ${metaJson.length}`);
+    console.log(`${index}/${total}  [UPLOAD] Meta JSON content length: ${metaJson.length}`);
     const meta: DBForgeRaceSubmission['meta'] = JSON.parse(metaJson);
-    console.log(`${index} [UPLOAD] Parsed meta data, id: ${meta.id}`);
+    console.log(`${index}/${total}  [UPLOAD] Parsed meta data, id: ${meta.id}`);
 
     const address = 'H8WhrngCpCRGkpim4FcRNzbt1BuT4Y9E6xtWf5AGdUem'
     // Create UUID from meta.id + address
     const uuid = createHash('sha256').update(`${meta.id}${address}`).digest('hex');
-    console.log(`${index} [UPLOAD] Generated submission UUID: ${uuid}`);
+    console.log(`${index}/${total}  [UPLOAD] Generated submission UUID: ${uuid}`);
 
     if(uuid != upload.id){
       console.log(`${index} [UPLOAD] - [ERROR] Generated submission UUID: ${uuid} doesn't match original id ${upload.id}`);
     }
     const existingSubmission = await ForgeRaceSubmissionModelFromConnection(db).findById(uuid)
     if(existingSubmission){
+      console.log(`${index}/${total} Submission already uploaded`)
       continue;
     }
-    console.log(`${index} [UPLOAD] Starting S3 upload for ${requiredFiles.length} files`);
+    console.log(`${index}/${total}  [UPLOAD] Starting S3 upload for ${requiredFiles.length} files`);
     const s3Service = new AWSS3Service(process.env.DO_SPACE_ACCESS_KEY, process.env.DO_SPACE_SECRET_KEY);
     const uploadedFiles = await Promise.all(
       requiredFiles.map(async (file) => {
         const filePath = path.join(uploadPath, file);
-        console.log(`${index} [UPLOAD] Getting stats for file: ${filePath}`);
+        console.log(`${index}/${total}  [UPLOAD] Getting stats for file: ${filePath}`);
         const fileStats = await stat(filePath);
         const fileTimestamp = upload.url.split('/').pop()?.replace('-'+metaFile, '') || "";
         const s3Key = `forge-races/${fileTimestamp}-${file}`;
 
         if(checkFlag(`${filePath}.uploaded`)) {
-          console.log(`${index} [UPLOAD] File already uploaded, skipping: ${filePath}`);
+          console.log(`${index}/${total}  [UPLOAD] File already uploaded, skipping: ${filePath}`);
           return { file, s3Key, size: fileStats.size };
         }
 
-        console.log(`${index} [UPLOAD] Uploading ${file} (${fileStats.size} bytes) to S3 with key: ${s3Key}`);
+        console.log(`${index}/${total}  [UPLOAD] Uploading ${file} (${fileStats.size} bytes) to S3 with key: ${s3Key}`);
 
         createFlag(`${filePath}.uploading`)
         await s3Service.saveItem({
@@ -91,17 +90,17 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
         removeFlag(`${filePath}.uploading`)
 
         createFlag(`${filePath}.uploaded`)
-        console.log(`${index} [UPLOAD] Successfully uploaded ${file} to S3`);
+        console.log(`${index}/${total}  [UPLOAD] Successfully uploaded ${file} to S3`);
 
         return { file, s3Key, size: fileStats.size };
       })
     );
-    console.log(`${index} [UPLOAD] All files uploaded to S3 successfully`);
+    console.log(`${index}/${total}  [UPLOAD] All files uploaded to S3 successfully`);
 
     meta.poolId = meta.quest.pool_id;
 
     if(checkFlag(`${uploadPath}/submission.counted`)) {
-      console.log(`${index} [UPLOAD] Pool and demonstration counted already`);
+      console.log(`${index}/${total}  [UPLOAD] Pool and demonstration counted already`);
     } else {
       // Check pool
       if (meta.poolId) {
@@ -113,7 +112,7 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
             "symbol": "OMNIS",
             "address": "G6iRK8kN67HJFrPA1CDA5KZaPJMiBu3bqdd9vdKBpump"
           }
-          console.log(`${index} [UPLOAD] Creating Pool: ${meta.poolId}`);
+          console.log(`${index}/${total}  [UPLOAD] Creating Pool: ${meta.poolId}`);
           await poolsDb.create({
             _id: meta.poolId,
             name: poolName,
@@ -128,7 +127,7 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
             depositPrivateKey: "N/A"
           });
         } else {
-          console.log(`${index} [UPLOAD] Pool found: ${meta.poolId} incrementing submissions`);
+          console.log(`${index}/${total}  [UPLOAD] Pool found: ${meta.poolId} incrementing submissions`);
           pool.demonstrations += 1
           await pool.save()
         }
@@ -137,7 +136,7 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
     }
 
     if(checkFlag(`${uploadPath}/submission.created`)) {
-      console.log(`${index} [UPLOAD] Submission already created: ${uuid}`);
+      console.log(`${index}/${total}  [UPLOAD] Submission already created: ${uuid}`);
     } else {
       const submission = await ForgeRaceSubmissionModelFromConnection(db).create({
         _id: uuid,
@@ -146,7 +145,7 @@ const uploadAll  = async (files :{url: string, id:string, filename: string}[], b
         status: ForgeSubmissionProcessingStatus.COMPLETED,
         files: uploadedFiles
       });
-      console.log(`${index} [UPLOAD] Submission created with ID: ${submission._id}`);
+      console.log(`${index}/${total}  [UPLOAD] Submission created with ID: ${submission._id}`);
       createFlag(`${uploadPath}/submission.created`)
     }
   }
