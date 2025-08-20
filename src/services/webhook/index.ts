@@ -107,9 +107,9 @@ export class Webhook {
             if (f.name.toLowerCase() === 'submitter' || f.name.toLowerCase() === 'transaction') {
               let value = f.value.slice(f.value.lastIndexOf("/"));
               value = value.slice(1, value.length - 1);
-              return `${fs}\n*${f.name}*: ${value}`
+              return `${fs}\n*${f.name}*: \`${value}\``
             }
-            return `${fs}\n*${f.name}*: \`${f.value}\``
+            return `${fs}\n*${f.name}*: ${f.value}`
           }
           return fs
         }, "")
