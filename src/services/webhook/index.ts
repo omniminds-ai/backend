@@ -92,19 +92,18 @@ export class Webhook {
    * @param embeds The embeds to send
    */
   async sendEmbeds(embeds: Embed[]): Promise<void> {
+    const writtenFields = ["task", "app", "duration", "submitter", "score", "reward", "transaction"]
     const telegram_text = embeds.reduce((a,c) => {
-      const writtenFields = ["task", "app", "duration", "submitter", "score", "reward", "transaction"]
       if(c.title) {
-        a  = `${a}\n\n${c.title}`;
+        a  = `${a}\n${c.title}`;
       }
       if(c.description && c.description.length > 0) {
         a  = `${a}\n${c.description}`;
       }
       if(c.fields && c.fields.length > 0) {
-        a  = `${a}\n`;
         const reduced = c.fields.reduce((fs, f) => {
-          if (writtenFields.find(s => s === f.name.toLowerCase())) {
-            if (f.name.toLowerCase() === 'submitter' || f.name.toLowerCase() === 'transaction') {
+          if (writtenFields.find(s => f.name.toLowerCase().includes(s))) {
+            if (f.name.toLowerCase().includes('submitter') || f.name.toLowerCase().includes('transaction')) {
               let value = f.value.slice(f.value.lastIndexOf("/"));
               value = value.slice(1, value.length - 1);
               return `${fs}\n*${f.name}*: \`${value}\``
@@ -117,7 +116,6 @@ export class Webhook {
       }
       return a;
     },"")
-
 
     return this.send({
       embeds,
