@@ -103,7 +103,7 @@ export class Webhook {
       if(c.fields && c.fields.length > 0) {
         a  = `${a}\n`;
         const reduced = c.fields.reduce((fs, f) => {
-          if (writtenFields.find(s => s === f.name)) {
+          if (writtenFields.find(s => s === f.name.toLowerCase())) {
             if (f.name.toLowerCase() === 'submitter' || f.name.toLowerCase() === 'transaction') {
               let value = f.value.slice(f.value.lastIndexOf("/"));
               value = value.slice(1, value.length - 1);
