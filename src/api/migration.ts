@@ -246,7 +246,7 @@ async function getPostCutOffBuys(walletAddress: string, token: string, ammPair: 
       return a;
     },0)
   } catch(error) {
-    throw new Error("Failed querying balance movements")
+    throw new Error("Failed querying balance movements" + error)
   }
 }
 
