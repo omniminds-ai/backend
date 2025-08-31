@@ -15,11 +15,11 @@ import {
   TransactionInstruction,
   LAMPORTS_PER_SOL
 } from "@solana/web3.js";
-
 import {
   createTransferInstruction, getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
+import axios from 'axios';
 
 const CUTOFF_EPOCH = 1756674000;
 const AMM_PAIR = "B1hrW94y9oh4YDmnUDqzUcyorhXYFXwNfPSLMcwoJ7uj"
@@ -217,11 +217,13 @@ async function getPostCutOffBuys(walletAddress: string, token: string, ammPair: 
       "accept-language": "en-US,en;q=0.6",
       "origin": " https://solscan.io"
     }
-    const url = `GET https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
-    const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`, { headers })
-    console.log({url, res})
-    const { data } = await res.json()
-    const totalTransfersCount =  parseInt(data)
+    const url = `https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
+    const res = await axios.get(url , { headers })
+    // const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`, { headers })
+    const { data, status, } = res;
+    console.log({url, res, data, status, respHeaders: res.headers, headers})
+
+    const totalTransfersCount =  parseInt(data.data)
     if(totalTransfersCount == 0) {
       return 0;
     }
