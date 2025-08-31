@@ -7,7 +7,7 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   sendAndConfirmTransaction,
-  ComputeBudgetProgram
+  ComputeBudgetProgram, TransactionResponse
 } from '@solana/web3.js';
 import {
   createTransferInstruction,
@@ -61,6 +61,10 @@ class BlockchainService {
       console.error('Error fetching token page:', err);
       return defaultSolPrice;
     }
+  }
+
+  async getTransaction(txHash: string) : Promise<TransactionResponse | null> {
+    return await this.connection.getTransaction(txHash);
   }
 
   async getBalance(tokenMint: string, walletAddress: string): Promise<number> {
@@ -127,6 +131,7 @@ class BlockchainService {
       return 0;
     }
   }
+
 
   async getNetworkFees(): Promise<{ low: number, medium: number, high: number, urgent:number }> {
     try {
@@ -537,6 +542,16 @@ class BlockchainService {
     } catch (error) {
       console.error('Error fetching tournament data:', error);
       return false;
+    }
+  }
+
+  async getLatestBlockHash() :Promise<string> {
+    try {
+      const latestBlockHash = await this.connection.getLatestBlockhash();
+      return latestBlockHash.blockhash;
+    } catch (error) {
+      console.error('Error fetching latest blockhash data', error);
+      throw error;
     }
   }
 

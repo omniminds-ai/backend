@@ -61,6 +61,9 @@ app.use('/v1/settings', settingsApi);
 import { walletApi } from './api/wallet.ts';
 app.use('/v1/wallet', walletApi);
 
+import { tokenMigrationApi }  from './api/migration.ts';
+app.use('/migration', tokenMigrationApi);
+
 
 // import { arena } from './api/gym.ts';
 // import { launchBayApi } from './api/forge/index.ts';
