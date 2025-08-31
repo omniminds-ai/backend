@@ -154,7 +154,7 @@ router.post(
     const { transactionHash } = req.body;
     const { claimId } = req.params;
 
-    sleep(500);
+    sleep(3000);
 
     if(!transactionHash) {
       return res.status(20).send("Bad Request: No Tx hash found.");
