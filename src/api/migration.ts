@@ -8,7 +8,6 @@ import express, { Router, Request, Response } from 'express';
 import { MigrationClaimsModel } from '../models/MigrationClaims.js'
 import BlockchainService from '../services/blockchain/index.ts';
 import {
-  Connection,
   PublicKey,
   Transaction,
   SystemProgram,
@@ -19,7 +18,6 @@ import {
   createTransferInstruction, getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
-import axios from 'axios';
 
 const CUTOFF_EPOCH = 1756674000;
 const AMM_PAIR = "B1hrW94y9oh4YDmnUDqzUcyorhXYFXwNfPSLMcwoJ7uj"
@@ -144,6 +142,7 @@ router.get(
 async function getEligibleBalance(walletAddress: string) : Promise<{ walletBalance: number, eligibleBalance:number }> {
   const walletBalance = await blockchainService.getTokenBalance(process.env.OMNIS_TOKEN || '', walletAddress);
   const postCutOffBuysTotal = await getPostCutOffBuys(walletAddress, OMNIS_MINTADDRESS, AMM_PAIR, CUTOFF_EPOCH);
+  console.log({walletBalance, postCutOffBuysTotal});
   return {walletBalance, eligibleBalance: walletBalance -  postCutOffBuysTotal};
 }
 
@@ -211,45 +210,29 @@ router.post(
 
 async function getPostCutOffBuys(walletAddress: string, token: string, ammPair: string, cutoff: number) : Promise<number> {
   try {
-    const pageSize = 100
-    const headers = {
-      "accept": "application/json text/plain */*",
-      "accept-language": "en-US,en;q=0.6",
-      "origin": " https://solscan.io"
-    }
-    const url = `https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
-    const res = await axios.get(url , { headers })
-    // const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`, { headers })
-    const { data, status, } = res;
-    console.log({url, res, data, status, respHeaders: res.headers, headers})
+    const response  = await fetch(`https://api.helius.xyz/v0/addresses/${walletAddress}/transactions/?api-key=68d9e5b6-9df3-4727-9185-b5673617fd3b`)
+    const transfers : {
+      timestamp : number,
+      type: string,
+      tokenTransfers: {
+        fromUserAccount : string,
+        toUserAccount : string,
+        tokenAmount: number,
+        mint: string
+      }[]
+    }[] = await response.json();
 
-    const totalTransfersCount =  parseInt(data.data)
-    if(totalTransfersCount == 0) {
-      return 0;
-    }
-    const pages = (totalTransfersCount / pageSize) + 1
-
-    let transfers : {
-      from_address: string;
-      to_address: string;
-      amount: number;
-      token_decimals: number;
-    }[] = [];
-    for (let i = 1; i <= pages; i++) {
-       const url = `GET https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
-      const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer?address=${walletAddress}&page=${i}&page_size=${pageSize}&token=${token}&from_time=${cutoff}`, { headers })
-       console.log({url, res})
-      const data = await res.json()
-      transfers = transfers.concat(data.data)
-
-      await sleep(10);
-    }
 
     return transfers.reduce((a, c) => {
-      if(c.from_address === ammPair && c.to_address === walletAddress) {
-        a += c.amount / 10**c.token_decimals
-      }
-      return a;
+     if(c.timestamp > cutoff) {
+       a += c.tokenTransfers.reduce((tokens, transfer) => {
+         if(transfer.fromUserAccount == ammPair && transfer.toUserAccount == walletAddress && transfer.mint == token) {
+           tokens += transfer.tokenAmount;
+         }
+         return tokens;
+       }, 0);
+     }
+     return a;
     },0)
   } catch(error) {
     throw new Error("Failed querying balance movements" + error)
