@@ -5,3 +5,4 @@ export * from './llm.ts';
 export * from './forge.ts';
 export * from './blockchain.ts';
 export * from './webhook.ts';
+export * from './migrationClaims.js';

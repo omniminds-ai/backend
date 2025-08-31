@@ -147,6 +147,18 @@ export const ValidationRules = {
     message: 'Must be a valid Solana wallet address'
   }),
 
+  isEthereumAddress: (): ValidationRule => ({
+    validate: async (value) => {
+      try {
+        var regExp = /^0x[0-9a-fA-F]{40}$/
+        return regExp.test(value);
+      } catch (error) {
+        return false;
+      }
+    },
+    message: 'Must be a valid Solana wallet address'
+  }),
+
   isValidName: (): ValidationRule => ({
     validate: (value) => {
       return /^[a-zA-Z0-9_]+$/.test(value);
