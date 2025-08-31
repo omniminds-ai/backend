@@ -143,7 +143,7 @@ router.get(
 
 async function getEligibleBalance(walletAddress: string) : Promise<{ walletBalance: number, eligibleBalance:number }> {
   const walletBalance = await blockchainService.getTokenBalance(process.env.OMNIS_TOKEN || '', walletAddress);
-  const postCutOffBuysTotal = await getPostCutOffBuys(walletAddress, process.env.OMNIS_TOKEN || '', AMM_PAIR,CUTOFF_EPOCH);
+  const postCutOffBuysTotal = await getPostCutOffBuys(walletAddress, OMNIS_MINTADDRESS, AMM_PAIR, CUTOFF_EPOCH);
   return {walletBalance, eligibleBalance: walletBalance -  postCutOffBuysTotal};
 }
 
@@ -217,7 +217,9 @@ async function getPostCutOffBuys(walletAddress: string, token: string, ammPair: 
       "accept-language": "en-US,en;q=0.6",
       "origin": " https://solscan.io"
     }
+    const url = `GET https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
     const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`, { headers })
+    console.log({url, res})
     const { data } = await res.json()
     const totalTransfersCount =  parseInt(data)
     if(totalTransfersCount == 0) {
@@ -232,7 +234,9 @@ async function getPostCutOffBuys(walletAddress: string, token: string, ammPair: 
       token_decimals: number;
     }[] = [];
     for (let i = 1; i <= pages; i++) {
+       const url = `GET https://api-v2.solscan.io/v2/account/transfer/total?address=${walletAddress}&page=1&token=${token}&from_time=${cutoff}`
       const res = await fetch(`https://api-v2.solscan.io/v2/account/transfer?address=${walletAddress}&page=${i}&page_size=${pageSize}&token=${token}&from_time=${cutoff}`, { headers })
+       console.log({url, res})
       const data = await res.json()
       transfers = transfers.concat(data.data)
 
