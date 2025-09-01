@@ -167,7 +167,7 @@ router.post(
           body: JSON.stringify({ transactions :[ transactionHash] }),
         });
 
-      const txs : { timestamp : number }[] = await response.json();
+      const txs : { timestamp : number, transactionError: any | null }[] = await response.json();
 
       if(!txs || txs.length > 0) {
         return res.status(200).send({success: false, message: "Can't find Transaction"});
@@ -179,6 +179,10 @@ router.post(
 
       if(!tx.timestamp || tx.timestamp <  Math.floor(validDate.getTime() / 1000)) {
         return res.status(400).send({success: false, message: "Transaction too old" });
+      }
+
+      if(tx.transactionError != null) {
+        return res.status(200).send({success: false, message: "Transaction Error"});
       }
 
     } catch (error) {
