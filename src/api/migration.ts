@@ -154,7 +154,7 @@ router.post(
     const { transactionHash } = req.body;
     const { claimId } = req.params;
 
-    sleep(1500);
+    await sleep(1500);
 
     if(!transactionHash) {
       return res.status(20).send("Bad Request: No Tx hash found.");
@@ -169,7 +169,7 @@ router.post(
 
       const txs : { timestamp : number, transactionError: any | null }[] = await response.json();
 
-      if(!txs || txs.length > 0) {
+      if(!txs || txs.length < 0) {
         return res.status(200).send({success: false, message: "Can't find Transaction"});
       }
       const tx = txs[0];
