@@ -154,24 +154,36 @@ router.post(
     const { transactionHash } = req.body;
     const { claimId } = req.params;
 
-    sleep(3000);
+    sleep(1500);
 
     if(!transactionHash) {
       return res.status(20).send("Bad Request: No Tx hash found.");
     }
 
-    const tx = await blockchainService.getTransaction(transactionHash);
+    try {
+      const response = await fetch(`https://api.helius.xyz/v0/transactions/?api-key=68d9e5b6-9df3-4727-9185-b5673617fd3b`, {
+          method: 'POST',
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ transactions :[ transactionHash] }),
+        });
 
-    if(!tx) {
-      return res.status(200).send({success: false, message: "Can't find Transaction"});
-    }
-    const validDate = new Date();
-    //Subtract 5 minutes from the current date
-    validDate.setMinutes(validDate.getMinutes() - 5);
+      const txs : { timestamp : number }[] = await response.json();
 
-    if(!tx.blockTime || tx.blockTime <  Math.floor(validDate.getTime() / 1000)) {
-      return res.status(400).send({success: false, message: "Transaction too old" });
-    }
+      if(!txs || txs.length > 0) {
+        return res.status(200).send({success: false, message: "Can't find Transaction"});
+      }
+      const tx = txs[0];
+      const validDate = new Date();
+      //Subtract 5 minutes from the current date
+      validDate.setMinutes(validDate.getMinutes() - 5);
+
+      if(!tx.timestamp || tx.timestamp <  Math.floor(validDate.getTime() / 1000)) {
+        return res.status(400).send({success: false, message: "Transaction too old" });
+      }
+
+    } catch (error) {
+    return res.status(200).send({success: false, message: error});
+  }
 
     const newclaim = await MigrationClaimsModel.findOneAndUpdate(
       {_id: claimId},
@@ -197,7 +209,7 @@ router.post(
       }
 
       if(!claim.ethFlowTriggered) {
-        claim.ethFlowTriggered = true;
+        claim.ethFlowTriggered = false; //todo: turn true + actually trigger
 
         //trigger eth flow
         await claim.save()
