@@ -169,7 +169,7 @@ router.post(
 
       const txs : { timestamp : number, transactionError: any | null }[] = await response.json();
 
-      if(!txs || txs.length < 0) {
+      if(!txs || txs.length < 1) {
         return res.status(200).send({success: false, message: "Can't find Transaction"});
       }
       const tx = txs[0];
