@@ -33,7 +33,8 @@ app.use(function (req, res, next) {
     'http://localhost:5173',
     'http://localhost:8001',
     'http://18.157.122.205',
-    'https://omniminds.ai'
+    'https://omniminds.ai',
+    'https://www.omniminds.ai'
   ];
 
   const origin = req.headers.origin || '';
